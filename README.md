@@ -1,11 +1,3 @@
-<em> HMI </em>
-    Insignias;
-    Índice;
-    Descripción del Proyecto;
-    Estado del proyecto;
-    Demostración de funciones y aplicaciones;
-    Acceso al Proyecto;
-    Tecnologías utilizadas;
-    Personas Contribuyentes;
-    Personas Desarrolladoras del Proyecto;
-    Licencia.
+# HMI - Procesamiento de Señales de Audio
+
+Este proyecto permite cargar un archivo `.wav`, visualizar la señal, aplicar filtros y transformadas, y guardar el audio procesado.
