@@ -115,7 +115,29 @@ class SignalProcessorApp:
         except ValueError:
             messagebox.showerror("Error", "Parámetros inválidos.")
 
+    def show_fft(self):
+        if self.audio_data is None:
+            messagebox.showwarning("Advertencia", "Primero carga un archivo.")
+            return
 
+        fft_vals_orig = np.fft.fft(self.audio_data)
+        fft_freqs = np.fft.fftfreq(len(self.audio_data), 1 / self.sample_rate)
+
+        plt.figure()
+        plt.title("Transformada de Fourier")
+
+        plt.plot(fft_freqs[:len(fft_vals_orig)//2], np.abs(fft_vals_orig[:len(fft_vals_orig)//2]), label="Original")
+
+        if self.filtered_data is not None:
+            fft_vals_filtered = np.fft.fft(self.filtered_data)
+            plt.plot(fft_freqs[:len(fft_vals_filtered)//2], np.abs(fft_vals_filtered[:len(fft_vals_filtered)//2]), label="Filtrada")
+
+        plt.xlabel("Frecuencia (Hz)")
+        plt.ylabel("Magnitud")
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.show()
 
     def save_audio(self):
         if self.filtered_data is None:
