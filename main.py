@@ -61,6 +61,80 @@ class SignalProcessorApp:
         self.fig, self.axs = plt.subplots(2, 1, figsize=(6, 4))
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().pack()
+      
+    def update_cutoff_visibility(self, event=None):
+        tipo = self.filter_type.get()
+        if tipo == "pasa-banda":
+            self.high_cutoff_label.grid()
+            self.high_cutoff_entry.grid()
+        else:
+            self.high_cutoff_label.grid_remove()
+            self.high_cutoff_entry.grid_remove()
+
+    def load_audio(self):
+        file_path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
+        if file_path:
+            self.sample_rate, data = wavfile.read(file_path)
+            self.audio_data = data if data.ndim == 1 else data[:, 0]  # Mono
+            self.filtered_data = None
+            self.plot_signal(self.audio_data, self.axs[0], "Señal Original")
+            self.axs[1].cla()
+            self.axs[1].set_title("Señal Filtrada")
+            self.canvas.draw()
+
+    def apply_filter(self):
+        if self.audio_data is None:
+            messagebox.showwarning("Advertencia", "Primero carga un archivo de audio.")
+            return
+
+        try:
+            order = int(self.order_entry.get())
+            filter_type = self.filter_type.get()
+            nyq = 0.5 * self.sample_rate
+
+            if filter_type == "pasa-bajas":
+                cutoff = float(self.cutoff_entry.get())
+                normal_cutoff = cutoff / nyq
+                b, a = butter(order, normal_cutoff, btype='low', analog=False)
+            elif filter_type == "pasa-altas":
+                cutoff = float(self.cutoff_entry.get())
+                normal_cutoff = cutoff / nyq
+                b, a = butter(order, normal_cutoff, btype='high', analog=False)
+            elif filter_type == "pasa-banda":
+                low = float(self.cutoff_entry.get()) / nyq
+                high = float(self.high_cutoff_entry.get()) / nyq
+                b, a = butter(order, [low, high], btype='band', analog=False)
+            else:
+                messagebox.showerror("Error", "Tipo de filtro desconocido.")
+                return
+
+            self.filtered_data = filtfilt(b, a, self.audio_data)
+            self.plot_signal(self.filtered_data, self.axs[1], f"Señal Filtrada ({filter_type})")
+            self.canvas.draw()
+
+        except ValueError:
+            messagebox.showerror("Error", "Parámetros inválidos.")
+
+
+
+    def save_audio(self):
+        if self.filtered_data is None:
+            messagebox.showwarning("Advertencia", "No hay señal procesada para guardar.")
+            return
+
+        file_path = filedialog.asksaveasfilename(defaultextension=".wav", filetypes=[("WAV", "*.wav")])
+        if file_path:
+            wavfile.write(file_path, self.sample_rate, self.filtered_data.astype(np.int16))
+            messagebox.showinfo("Guardado", f"Archivo guardado en {file_path}")
+
+    def plot_signal(self, signal, axis, title):
+        axis.cla()
+        axis.plot(np.linspace(0, len(signal)/self.sample_rate, num=len(signal)), signal)
+        axis.set_title(title)
+        axis.set_xlabel("Tiempo (s)")
+        axis.set_ylabel("Amplitud")
+        axis.grid(True)
+
 
 # Ejecutar la app
 if __name__ == "__main__":
