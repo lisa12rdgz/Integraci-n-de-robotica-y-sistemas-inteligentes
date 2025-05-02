@@ -73,5 +73,41 @@ while True:
 
     cv2.imshow('Mascara HSV', mask) # mostrar el filtro de colores
 
+    contornos, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
+
+    new_balls = []
+
+    for contorno contornos: # analizis de los contrno para determinar si son circulares
+        area = cv2.contourArea(contorno)
+        if area < 500:
+            continue
+
+        perimetro = cv2.arcLength(contorno, True)
+        if perimetro == 0:
+            continue
+
+        circularidad = 4 * math.pi * area / (perimetro * perimetro)
+        if circularidad < 0.7:  # limite de circularidad que buscamos
+            continue
+
+        ((x, y), radio) = cv2.minEnclosingCircle(contorno)
+
+        if radio > 10:
+            medida = np.array([[np.float32(x)], [np.float32(y)]])
+            new_tracker = BallTracker((x, y))
+            new_tracker.correct(medida)
+            new_balls.append(new_tracker)
+            cv2.circle(frame, (int(x), int(y)), int(radio), (0, 255, 0), 2) # Mostramos en la pantalla el contorno del circulo detectado
+
+    balls = new_balls
+
+    for ball in balls:
+        prediction = ball.predict()
+        predx, predy = int(prediction[0]), int(prediction[1])
+        cv2.circle(frame, (predx, predy), 10, (0, 0, 255), 2) # nuevo circlo
+        cv2.putText(frame, 'Prediccion', (predx - 30, predy - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2) # marcamos la bola que indica la prediccopn
+
+    cv2.imshow('Seguimiento de Pelotas con Kalman', frame)
+
 cap.release()
 cv2.destroyAllWindows()
